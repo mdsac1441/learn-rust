@@ -1,0 +1,17 @@
+1. solana-test-validator
+2. solana config get
+3. solana --version
+4. solana-test-validator --log
+5. solana address -k target/deploy/note_book-keypair.json // note_book is anchor project name
+6. anchor init project_name
+7. anchor build
+8. anchor test
+9. solana-keygen new --force
+
+Wrote new keypair to /home/lap/.config/solana/id.json
+=================================================================================
+pubkey: r1zaaRoQ7M7KnD2njkooMWoNaRmyMuBJrd9gWoHHPd2
+=================================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+lottery solar impact jungle walk curious judge avocado market unique super vacuum
+=================================================================================

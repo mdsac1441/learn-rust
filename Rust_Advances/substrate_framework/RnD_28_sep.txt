@@ -1,0 +1,149 @@
+// https://docs.substrate.io/tutorials/get-started/build-local-blockchain/
+// https://docs.substrate.io/tutorials/get-started/simulate-network/
+// https://docs.substrate.io/tutorials/get-started/add-trusted-nodes/
+Note: The two nodes are started using different accounts and keys but run on a single computer.
+Start a blockchain node using a predefined account.
+Learn the key command-line options used to start a node.
+Determine if a node is running and producing blocks.
+Connect a second node to a running network.
+Verify peer computers produce and finalize blocks.
+
+Node 1: Start the first blockchain node
+step1: ./target/release/node-template purge-chain --base-path /tmp/alice --chain dev -y
+
+step2: ./target/release/node-template --base-path /tmp/alice --chain dev --rpc-cors=all --alice --port 30333 --ws-port 9945 --rpc-port 9933 --node-key 0000000000000000000000000000000000000000000000000000000000000001 --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" --validator
+
+Node 2: Add a second node to the blockchain network
+step1: ./target/release/node-template purge-chain --base-path /tmp/bob --chain dev -y
+
+step2: ./target/release/node-template --base-path /tmp/bob  --chain dev --bob --port 30334 --ws-port 9946 --rpc-port 9934 --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" --validator --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+
+
+Add trusted nodes:
+Generate key pairs for use as a network authority.
+Create a custom chain specification file.
+Launch a private two-node blockchain network.
+Use node-template command-line options to generate random keys locally and remain connected to the internet.
+Node 1:
+step1: ./target/release/node-template key generate --scheme Sr25519 --password-interactive
+Note: You now have the Sr25519 key for producing blocks using aura for one node. In this example, the Sr25519 public key for the account is  5H1efqxAckKi4d1sXCfQEtAqqinnWJcGPEZVQZovfNnPkgPn.
+
+Use the secret phrase for the account you just generated to derive keys using the Ed25519 signature scheme.
+step2: ./target/release/node-template key inspect --password-interactive --scheme Ed25519 "urban initial flower forget alter fiscal outdoor maid ice pitch among where"
+Note: You now have the Ed25519 key for finalizing blocks using grandpa for one node. In this example, the Ed25519 public key for the account is 5GTRxrNBWrEeRhWRxG2zsKpkdEsgvhbokJFRmupQXSRKxozY.
+
+Node 2:
+step1: ./target/release/node-template key generate --scheme Sr25519 --password-interactive
+Note: You now have the Sr25519 key for producing blocks using aura for one node. In this example, the Sr25519 public key for the account is  5HVPU92MCP71QzDwUnQyxDqozpZ7wNimFPKoafTCEnf3gqrD.
+
+Use the secret phrase for the account you just generated to derive keys using the Ed25519 signature scheme.
+step2: ./target/release/node-template key inspect --password-interactive --scheme Ed25519 "digital sleep wrestle property ethics enemy grant also idea grant among jar"
+Note: You now have the Ed25519 key for finalizing blocks using grandpa for one node. In this example, the Ed25519 public key for the account is 5CtJhLnGibJftRseoQ4FeuwwRS3nsc5NNiCaaoTPhd8UuStB.
+
+Create a custom chain specification: After you generate the keys to use with your blockchain, you are ready to create a custom chain specification using those key pairs then share your custom chain specification with trusted network participants called validators.
+To enable others to participate in your blockchain network, ensure that they generate their own keys.
+
+Modify the local chain specification:
+step1: ./target/release/node-template build-spec --disable-default-bootnode --chain local > customSpec.json
+Preview the first few fields in the customSpec.json file by running the following command:
+cmd: head customSpec.json
+Preview the last fields in the customSpec.json file by running the following command:
+cmd: tail -n 80 customSpec.json
+
+Open the customSpec.json file in a text edito and Modify it:
+Modify the name field to identify this chain specification as a custom chain specification.
+Modify aura field to specify the nodes with the authority to create blocks by adding the Sr25519 SS58 address keys for each network participant.
+Modify the grandpa field to specify the nodes with the authority to finalize blocks by adding the Ed25519 SS58 address keys for each network participant.
+
+To add validators:
+
+Modify the aura section to include Sr25519 addresses.
+Modify the grandpa section to include Ed25519 addresses and a voting weight.
+
+Convert the chain specification to raw format: After you prepare a chain specification with the validator information, you must convert it into a raw specification format before it can be used.
+cmd: ./target/release/node-template build-spec --chain=customSpec.json --raw --disable-default-bootnode > customSpecRaw.json
+
+Start the first node:
+As the first participant in the private blockchain network, you are responsible for starting the first node, called the bootnode.
+Step1: ./target/release/node-template \
+  --base-path /tmp/node01 \
+  --chain ./customSpecRaw.json \
+  --port 30333 \
+  --ws-port 9945 \
+  --rpc-port 9933 \
+  --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+  --validator \
+  --rpc-methods Unsafe \
+  --name MyNode01 \
+  --password-interactive
+  
+Note: 
+The --base-path command-line option specifies a custom location for the chain associated with this first node.
+The --chain command-line option specifies the custom chain specification.
+The --validator command-line option indicates that this node is an authority for the chain.
+The --rpc-methods Unsafe command-line option allows you to continue the tutorial using an unsafe communication mode because your blockchain is not being used in a production setting.
+The --name command-line option enables you to give your node a human-readable name in the telemetry UI.
+
+Add keys to the keystore:
+step1: ./target/release/node-template key insert --base-path /tmp/node01 \
+  --chain customSpecRaw.json \
+  --scheme Sr25519 \
+  --suri "urban initial flower forget alter fiscal outdoor maid ice pitch among where" \
+  --password-interactive \
+  --key-type aura
+  
+step2: ./target/release/node-template key insert \
+  --base-path /tmp/node01 \
+  --chain customSpecRaw.json \
+  --scheme Ed25519 \
+  --suri "urban initial flower forget alter fiscal outdoor maid ice pitch among where" \
+  --password-interactive \
+  --key-type gran
+  
+Verify that your keys are in the keystore for node01 by running the following command: ls /tmp/node01/chains/local_testnet/keystore
+
+Enable other participants to join:Node 2;
+step1: ./target/release/node-template \
+  --base-path /tmp/node02 \
+  --chain ./customSpecRaw.json \
+  --port 30334 \
+  --ws-port 9946 \
+  --rpc-port 9934 \
+  --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+  --validator \
+  --rpc-methods Unsafe \
+  --name MyNode02 \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWQroxXJiVHFc9j6HTg2dWWhipviK2FhY26hhaT1KTTUWh \
+  --password-interactive
+  
+step2: ./target/release/node-template key insert --base-path /tmp/node02 \
+  --chain customSpecRaw.json \
+  --scheme Sr25519 \
+  --suri "digital sleep wrestle property ethics enemy grant also idea grant among jar" \
+  --password-interactive \
+  --key-type aura
+  
+step3: ./target/release/node-template key insert --base-path /tmp/node02 \
+  --chain customSpecRaw.json \
+  --scheme Ed25519 --suri "digital sleep wrestle property ethics enemy grant also idea grant among jar" \
+  --password-interactive \
+  --key-type gran
+
+Verify that your keys are in the keystore for node01 by running the following command: ls /tmp/node02/chains/local_testnet/keystore
+
+Restart the second blockchain node by running the following command:
+./target/release/node-template \
+  --base-path /tmp/node02 \
+  --chain ./customSpecRaw.json \
+  --port 30334 \
+  --ws-port 9946 \
+  --rpc-port 9934 \
+  --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
+  --validator \
+  --rpc-methods Unsafe \
+  --name MyNode02 \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWQroxXJiVHFc9j6HTg2dWWhipviK2FhY26hhaT1KTTUWh \
+  --password-interactive
+
+  
+  
